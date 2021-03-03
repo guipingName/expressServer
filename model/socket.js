@@ -9,24 +9,23 @@ module.exports = function(io){
 
 		//统计连接的客户端数
 		socketList[socket.id] = socket.id;
-
 		let socketids = Object.values(socketList);
 		console.log(' ('+socket.id+') '+'连接成功' +'   当前活跃用户:' + socketids.length);
 
 
 		//发送消息
 		socket.on('message', (msg) => {
-			if (msg.data.isPic) {
-				var tempData = {
+			if (msg.data.type == 2) {
+				var dic = {
 					fid:msg.fid,
 					tid:msg.tid,
 					data:{
-						msg:'[[[图片]]]',
-						isPic:msg.data.isPic,
+						msg:'[图片]',
+						type:2,
 						stime:msg.data.stime
 					}
 				}
-				//console.log(tempData);
+				console.log(dic);
 			} else {
 				console.log(msg);
 			}
@@ -34,9 +33,9 @@ module.exports = function(io){
 				let socketids = Object.values(socketList);
 				if (socketids.indexOf(sid) != -1) {
 					socket.to(sid).emit('receiveMessage',msg);
-					mysql.insertChatMsg(msg, 1);
-				} else {
 					mysql.insertChatMsg(msg, 0);
+				} else {
+					mysql.insertChatMsg(msg, 1);
 				}
 			});
 		});
