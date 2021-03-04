@@ -10,8 +10,7 @@ module.exports = function(io){
 		//统计连接的客户端数
 		socketList[socket.id] = socket.id;
 		let socketids = Object.values(socketList);
-		console.log(' ('+socket.id+') '+'连接成功' +'   当前活跃用户:' + socketids.length);
-
+		console.log(' '+socket.id+' '+'===连接成功===' +'当前连接的客户端数:' + socketids.length);
 
 		//发送消息
 		socket.on('message', (msg) => {
@@ -25,18 +24,16 @@ module.exports = function(io){
 						stime:msg.data.stime
 					}
 				}
-				console.log(dic);
+				//console.log(dic);
 			} else {
-				console.log(msg);
+				//console.log(msg);
 			}
 			mysql.getUserSocketid(msg.tid, (sid) => {
 				let socketids = Object.values(socketList);
 				if (socketids.indexOf(sid) != -1) {
 					socket.to(sid).emit('receiveMessage',msg);
-					mysql.insertChatMsg(msg, 0);
-				} else {
-					mysql.insertChatMsg(msg, 1);
 				}
+				mysql.insertChatMsg(msg, 1);
 			});
 		});
 
@@ -46,7 +43,7 @@ module.exports = function(io){
 				delete socketList[socket.id];
 			}
 			let socketids = Object.values(socketList);
-			console.log(' ('+socket.id+') '+'连接断开' +'   当前活跃用户:' + socketids.length);
+			console.log(' '+socket.id+' '+'===连接断开===' +'当前连接的客户端数:' + socketids.length);
 			mysql.autoLogout(socket.id);
 		})
 	});

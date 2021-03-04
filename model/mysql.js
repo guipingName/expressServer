@@ -127,15 +127,19 @@ exports.chatList = function(userid, callback){
         }
 
         var user = [];
-        console.log(result[0]);
         result.forEach(item => {
+            var count = 0;
+            if (item.tid == userid && item.unread) {
+                count = 1;
+            }
             var newitem = {
                 username:item.username,
                 img:item.img,
                 online:item.online,
                 msg:item.msg ? item.msg : item.introduce,
                 stime:item.stime.getTime(),//转成时间戳
-                id:item.fid == userid ? item.tid : item.fid
+                id:item.fid == userid ? item.tid : item.fid,
+                count:count
             }
             user.push(newitem);
         });
@@ -146,18 +150,22 @@ exports.chatList = function(userid, callback){
         }).forEach(([{...item}])=>{
             const flag = newArray.find(([{...o}])=>o.id === item.id);
             if(!flag) {
-                newArray.push([{...item}])
+                newArray.push([{...item}]);
             } else {
                 newArray.forEach(([{...y}], index)=>{
                     if(y.id === item.id) {
-                        if (y.stime < item.stime) {
+                        var c = newArray[index][0].count;
+                        if (item.count) {
+                            c += 1;
+                        }
+                        if (item.stime > y.stime) {
                             newArray[index].splice(0,1,item);
+                            newArray[index][0].count = c;
                         }
                     }
                 })
             }
         })
-        //todo:这里要统计下每个人的未读消息条数
         var array = [];
         newArray.forEach(([{...item}]) => {
             array.push(item);
@@ -209,7 +217,6 @@ exports.getUserSocketid = function(userid, callback){
     var sql = 'SELECT socketid FROM userinfo_tbl WHERE id =' + "'" + userid + "'";
     connection.query(sql, function (err, result) {
         if(err){
-            //console.log('[SELECT ERROR] - ',err.message);
             return;
         }
         var socketid = result[0].socketid;
@@ -218,17 +225,17 @@ exports.getUserSocketid = function(userid, callback){
 }
 
 //插入聊天数据
-exports.insertChatMsg = function(msgData, clientOnline){
+exports.insertChatMsg = function(msgData, unread){
     //商品信息存入数据库
     var msg = msgData.data.type == 2 ? '[图片]' : msgData.data.msg;
     var sql = "INSERT INTO message_tbl (fid, tid, type, msg, stime, unread) VALUES ("
                + "'" + msgData.fid + "' , '" + msgData.tid + "' , '" + msgData.data.type + "' , '" + msg + "' , '"
-               + msgData.data.stime + "' , '" + clientOnline + "')";
+               + msgData.data.stime + "' , '" + unread + "')";
     if (msgData.data.type == 1) {
         sql = "INSERT INTO message_tbl (fid, tid, type, goodsImg, introduce, price, detail, stime, unread) VALUES ("
                + "'" + msgData.fid + "' , '" + msgData.tid + "' , '" + msgData.data.type + "' , '" + msgData.data.img
                + "' , '" + msgData.data.introduce + "' , '" + msgData.data.price + "' , '" + msgData.data.detail + "' , '"
-               + msgData.data.stime + "' , '" + clientOnline + "')";
+               + msgData.data.stime + "' , '" + unread + "')";
     }
     connection.query(sql, function (err, result) {
         if(err){

@@ -71,7 +71,6 @@ app.get('/chatHistory', (req, res) => {
 //标记未读消息
 app.get('/untoread', (req, res) => {
 	mysql.untoread(req.query, (result) => {
-		console.log(result);
 		res.json(result);
 	});
 })
